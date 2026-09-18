@@ -38,6 +38,9 @@ type Env struct {
 	// The harness sets it; collectors that emit sensitive values MUST use it
 	// rather than redacting ad hoc.
 	Redact *Redactor
+	// EnabledModules is the effective set of enabled module keys for this run,
+	// in catalog order. The agent module hashes it into its config fingerprint.
+	EnabledModules []string
 }
 
 // Collector collects exactly one report section, whose payload is of type T. A

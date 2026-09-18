@@ -62,14 +62,15 @@ func CollectReport(ctx context.Context, reg *Registry, runner unixcmds.Runner, c
 		timeout = defaultTimeout
 	}
 
-	env := &Env{Runner: runner, Redact: redact}
+	enabled := cfg.EnabledKeys()
+	env := &Env{Runner: runner, Redact: redact, EnabledModules: enabled}
 
 	rep := &report.Report{
 		SchemaVersion:  report.SchemaVersion,
 		GeneratedAt:    now().UTC(),
 		Mode:           report.ModeLocal,
 		Platform:       detectPlatform(ctx, env),
-		EnabledModules: cfg.EnabledKeys(),
+		EnabledModules: enabled,
 	}
 
 	// Partition every catalog module: disabled and unsupported are set inline;

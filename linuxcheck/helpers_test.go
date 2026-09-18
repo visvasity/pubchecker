@@ -13,7 +13,10 @@ import (
 )
 
 func testEnv() *Env {
-	return &Env{Runner: unixcmds.Runner{Runner: shcmd.Runtime()}}
+	return &Env{
+		Runner: unixcmds.Runner{Runner: shcmd.Runtime()},
+		Redact: NewRedactor([]byte("test-salt")),
+	}
 }
 
 func TestClassifyFromRealCommands(t *testing.T) {
