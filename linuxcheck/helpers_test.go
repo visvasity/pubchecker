@@ -4,6 +4,7 @@ package linuxcheck
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/visvasity/hostcheck/report"
@@ -75,6 +76,25 @@ func TestRedactorHash(t *testing.T) {
 	}
 	if NewRedactor([]byte("other-salt")).Hash("alice") == a {
 		t.Error("different salt produced same digest")
+	}
+}
+
+func TestLookTool(t *testing.T) {
+	ctx := context.Background()
+	env := testEnv()
+
+	// A ubiquitous tool resolves to an absolute path.
+	if path, ok := lookTool(ctx, env, "sh"); !ok || !strings.HasPrefix(path, "/") {
+		t.Errorf("lookTool(sh) = %q, %v; want an absolute path", path, ok)
+	}
+	// A tool present in an sbin dir but likely off PATH still resolves if installed;
+	// a definitely-absent tool reports not found.
+	if _, ok := lookTool(ctx, env, "hostcheck-definitely-not-a-tool"); ok {
+		t.Error("lookTool found a nonexistent tool")
+	}
+	// An invalid name is rejected without probing the host.
+	if _, ok := lookTool(ctx, env, "bad name; rm -rf"); ok {
+		t.Error("lookTool accepted an invalid tool name")
 	}
 }
 

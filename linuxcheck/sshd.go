@@ -32,9 +32,15 @@ func (sshdCollector) Commands() []Command {
 }
 
 func (sshdCollector) Collect(ctx context.Context, env *Env) report.Section[report.SSHDConfig] {
-	out, err := output(ctx, env, "sshd", "-T")
+	// sshd usually lives in an sbin dir that may be off PATH; resolve it so a
+	// thin PATH does not masquerade as "sshd absent".
+	path, ok := lookTool(ctx, env, "sshd")
+	if !ok {
+		return NotApplicable[report.SSHDConfig]() // sshd is genuinely not installed
+	}
+	out, err := output(ctx, env, path, "-T")
 	if err != nil {
-		return fail[report.SSHDConfig](err)
+		return fail[report.SSHDConfig](err) // present but failed (e.g. needs root)
 	}
 	return Collected("sshd", parseSSHDConfig(out))
 }

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/visvasity/hostcheck/report"
@@ -32,6 +33,48 @@ func output(ctx context.Context, env *Env, name string, args ...string) (string,
 // command with arguments.
 func sh(ctx context.Context, env *Env, script string) (string, error) {
 	return output(ctx, env, "sh", "-c", script)
+}
+
+// toolSearchDirs are the standard directories searched, in addition to PATH,
+// when resolving an admin binary. Many collectors need tools in the sbin dirs,
+// which are frequently absent from PATH under sudo, cron, or non-login shells.
+var toolSearchDirs = []string{
+	"/usr/local/sbin", "/usr/local/bin",
+	"/usr/sbin", "/sbin",
+	"/usr/bin", "/bin",
+}
+
+// toolNameRE guards the tool name embedded in the lookup shell script. Names come
+// from collectors (constants), but validating keeps the script injection-proof.
+var toolNameRE = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+// lookTool resolves name to an absolute path on the target, searching PATH first
+// (via `command -v`) then toolSearchDirs, in a single sh probe. It reports false
+// only when the tool is genuinely absent everywhere — letting a collector return
+// not-applicable for "absent" while reserving error for "present but failed".
+//
+// Each call issues one probe; results are not cached (collectors resolve their
+// few tools once per run).
+func lookTool(ctx context.Context, env *Env, name string) (string, bool) {
+	if !toolNameRE.MatchString(name) {
+		return "", false
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "command -v %s 2>/dev/null && exit 0\n", name)
+	for _, d := range toolSearchDirs {
+		fmt.Fprintf(&b, "if [ -x %s/%s ]; then printf '%%s\\n' %s/%s; exit 0; fi\n", d, name, d, name)
+	}
+	b.WriteString("exit 1\n")
+
+	out, err := sh(ctx, env, b.String())
+	if err != nil {
+		return "", false
+	}
+	path := strings.TrimSpace(out)
+	if path == "" {
+		return "", false
+	}
+	return path, true
 }
 
 // classify maps a command execution error to a report status. A missing tool
