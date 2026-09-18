@@ -73,7 +73,7 @@ func TestRegisterRejectsUnknownKey(t *testing.T) {
 
 type badKeyCollector struct{}
 
-func (badKeyCollector) Key() string      { return "not-a-real-module" }
+func (badKeyCollector) Key() string         { return "not-a-real-module" }
 func (badKeyCollector) Commands() []Command { return nil }
 func (badKeyCollector) Collect(context.Context, *Env) report.Section[report.SSHDConfig] {
 	return report.Section[report.SSHDConfig]{}

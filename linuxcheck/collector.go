@@ -29,12 +29,15 @@ type Command struct {
 }
 
 // Env is the collection environment handed to every collector. It intentionally
-// starts small and grows as shared helpers (redaction, hashing, clock) are
-// added; collectors take what they need from it rather than reaching for global
-// state.
+// starts small and grows as shared helpers (clock, etc.) are added; collectors
+// take what they need from it rather than reaching for global state.
 type Env struct {
 	// Runner executes commands and file operations on the target host.
 	Runner unixcmds.Runner
+	// Redact applies the shared redaction policy (salted hashing, IP prefixing).
+	// The harness sets it; collectors that emit sensitive values MUST use it
+	// rather than redacting ad hoc.
+	Redact *Redactor
 }
 
 // Collector collects exactly one report section, whose payload is of type T. A

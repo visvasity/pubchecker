@@ -80,6 +80,15 @@ func (r *Registry) Has(key string) bool {
 	return ok
 }
 
+// get returns the bound collector for a key.
+func (r *Registry) get(key string) (boundCollector, bool) {
+	i, ok := r.byKey[key]
+	if !ok {
+		return boundCollector{}, false
+	}
+	return r.order[i], true
+}
+
 // Commands returns the commands declared by the collector for key, and whether
 // such a collector is registered. This backs the transparency/--explain view.
 func (r *Registry) Commands(key string) ([]Command, bool) {
