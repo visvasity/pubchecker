@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Visvasity LLC
+
 package report
 
 import "time"
@@ -53,15 +55,18 @@ type HostIdentity struct {
 	Distribution  string    `json:"distribution,omitempty"`
 	Version       string    `json:"version,omitempty"`
 	KernelVersion string    `json:"kernel_version,omitempty"`
-	BootTime      time.Time `json:"boot_time,omitempty"`
+	BootTime      time.Time `json:"boot_time,omitzero"`
 	UptimeBucket  string    `json:"uptime_bucket,omitempty"` // coarse bucket, not exact seconds
 }
 
-// PublicIP is the "public-ip" module.
+// PublicIP is the "public-ip" module. It is gateway-essential but defaults to
+// prefix redaction: IPv4/IPv6 hold network prefixes (or hashes) with Redacted
+// true unless the operator explicitly opts into transmitting exact addresses.
+// Prefix form still supports host correlation and change detection.
 type PublicIP struct {
 	IPv4     []string `json:"ipv4,omitempty"` // exact, prefix, or hash depending on Redacted
 	IPv6     []string `json:"ipv6,omitempty"`
-	Redacted bool     `json:"redacted,omitempty"` // true if reduced to prefix/hash
+	Redacted bool     `json:"redacted,omitempty"` // true if reduced to prefix/hash (the default)
 	Source   string   `json:"source,omitempty"`   // "routing" | "external-echo"
 }
 
@@ -335,7 +340,7 @@ type OSUpdates struct {
 	PendingSecurity       int       `json:"pending_security"`
 	OldestSecurityAgeDays int       `json:"oldest_security_age_days"` // patch lag; -1 if none pending
 	AutoUpdatesEnabled    bool      `json:"auto_updates_enabled"`
-	LastRunTime           time.Time `json:"last_run_time,omitempty"`
+	LastRunTime           time.Time `json:"last_run_time,omitzero"`
 	LastRunOutcome        string    `json:"last_run_outcome,omitempty"` // success|failure|unknown
 }
 

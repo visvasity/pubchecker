@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Visvasity LLC
+//
 // Package report defines the data model produced by the HostCheck local agent.
 //
 // A Report is a single canonical snapshot of a host's security-relevant state.
