@@ -12,7 +12,15 @@ import (
 
 	"github.com/visvasity/hostcheck/report"
 	"github.com/visvasity/shcmd"
+	"github.com/visvasity/unixcmds"
 )
+
+// LookTool resolves name to an absolute path on the host reachable via r,
+// searching PATH and the standard admin directories. It reports false only when
+// the tool is genuinely absent. It backs the `explain -check` availability view.
+func LookTool(ctx context.Context, r unixcmds.Runner, name string) (string, bool) {
+	return lookTool(ctx, &Env{Runner: r}, name)
+}
 
 // output runs name with args on the target and returns stdout. On failure the
 // returned error wraps the underlying execution error (so classify can inspect

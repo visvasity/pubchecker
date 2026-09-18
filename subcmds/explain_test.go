@@ -20,7 +20,7 @@ func find(mods []explainModule, key string) (explainModule, bool) {
 
 func TestBuildExplain(t *testing.T) {
 	reg := linuxcheck.DefaultRegistry()
-	mods := buildExplain(reg, report.Config{})
+	mods := buildExplain(reg, report.Config{}, nil)
 
 	if len(mods) != len(report.Catalog) {
 		t.Fatalf("explain has %d modules, catalog has %d", len(mods), len(report.Catalog))
@@ -53,11 +53,43 @@ func TestBuildExplainConfigOverrides(t *testing.T) {
 	reg := linuxcheck.DefaultRegistry()
 
 	cfg := report.Config{}.Without(report.KeySSHDConfig)
-	if m, _ := find(buildExplain(reg, cfg), report.KeySSHDConfig); m.State != stateDisabled {
+	if m, _ := find(buildExplain(reg, cfg, nil), report.KeySSHDConfig); m.State != stateDisabled {
 		t.Errorf("disabled sshd-config state = %q, want %q", m.State, stateDisabled)
 	}
 	// Commands still shown for a registered-but-disabled module (transparency).
-	if m, _ := find(buildExplain(reg, cfg), report.KeySSHDConfig); len(m.Commands) == 0 {
+	if m, _ := find(buildExplain(reg, cfg, nil), report.KeySSHDConfig); len(m.Commands) == 0 {
 		t.Error("commands should be listed for a registered module even when disabled")
+	}
+}
+
+func TestBuildExplainCheck(t *testing.T) {
+	reg := linuxcheck.DefaultRegistry()
+	// Fake resolver: sshd is "not found", everything else resolves under /usr/bin.
+	resolve := func(name string) (string, bool) {
+		if name == "sshd" {
+			return "", false
+		}
+		return "/usr/bin/" + name, true
+	}
+
+	m, ok := find(buildExplain(reg, report.Config{}, resolve), report.KeySSHDConfig)
+	if !ok || len(m.Commands) != 1 {
+		t.Fatalf("sshd-config command missing: %+v", m)
+	}
+	cmd := m.Commands[0]
+	if cmd.Available == nil || *cmd.Available {
+		t.Errorf("sshd should be reported unavailable, got %v", cmd.Available)
+	}
+	if cmd.ResolvedPath != "" {
+		t.Errorf("unavailable command should have no resolved path, got %q", cmd.ResolvedPath)
+	}
+	if note := availabilityNote(cmd); note != "   [sshd: command not found]" {
+		t.Errorf("availabilityNote = %q", note)
+	}
+
+	// Without a resolver, availability is left unset.
+	m2, _ := find(buildExplain(reg, report.Config{}, nil), report.KeySSHDConfig)
+	if m2.Commands[0].Available != nil {
+		t.Error("availability should be nil when probing is disabled")
 	}
 }
