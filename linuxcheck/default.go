@@ -18,5 +18,7 @@ func registerDefaults(reg *Registry) {
 	Register(reg, Agent(), func(r *report.Report) *report.Section[report.Agent] { return &r.Agent })
 	Register(reg, HostIdentity(), func(r *report.Report) *report.Section[report.HostIdentity] { return &r.HostIdentity })
 	Register(reg, PublicIP(), func(r *report.Report) *report.Section[report.PublicIP] { return &r.PublicIP })
+	Register(reg, ListeningTCP(), func(r *report.Report) *report.Section[report.ListeningSockets] { return &r.ListeningTCP })
+	Register(reg, ListeningUDP(), func(r *report.Report) *report.Section[report.ListeningSockets] { return &r.ListeningUDP })
 	Register(reg, SSHD(), func(r *report.Report) *report.Section[report.SSHDConfig] { return &r.SSHDConfig })
 }

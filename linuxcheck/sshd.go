@@ -5,7 +5,6 @@ package linuxcheck
 import (
 	"context"
 	"net"
-	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
@@ -109,22 +108,7 @@ func listenAddrClass(val string) string {
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
 	}
-	switch host {
-	case "0.0.0.0", "::", "*", "":
-		return "wildcard"
-	}
-	addr, err := netip.ParseAddr(host)
-	if err != nil {
-		return "routable" // unknown form: assume reachable (conservative)
-	}
-	switch {
-	case addr.IsUnspecified():
-		return "wildcard"
-	case addr.IsLoopback():
-		return "loopback"
-	default:
-		return "routable"
-	}
+	return bindClassForHost(host)
 }
 
 // weakAlgoSubstrings are lowercase markers of clearly-weak SSH algorithms. The

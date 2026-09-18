@@ -58,7 +58,7 @@ func (publicIPCollector) Collect(ctx context.Context, env *Env) report.Section[r
 // from `ip -o addr` output, dropping private, loopback, link-local, and other
 // non-public addresses. Returned addresses are bare (no prefix length).
 func parsePublicIPs(out string) (v4, v6 []string) {
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		fields := strings.Fields(line)
 		for i := 0; i+1 < len(fields); i++ {
 			if fields[i] != "inet" && fields[i] != "inet6" {

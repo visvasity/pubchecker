@@ -38,9 +38,9 @@ func TestBuildExplain(t *testing.T) {
 		}
 	}
 
-	// listening-tcp: enabled by default but no collector -> unsupported.
-	if m, _ := find(mods, report.KeyListeningTCP); m.State != stateUnsupported {
-		t.Errorf("listening-tcp state = %q, want %q", m.State, stateUnsupported)
+	// nat-forwarding: enabled by default but no collector yet -> unsupported.
+	if m, _ := find(mods, report.KeyNATForwarding); m.State != stateUnsupported {
+		t.Errorf("nat-forwarding state = %q, want %q", m.State, stateUnsupported)
 	}
 
 	// package-inventory: off by default -> disabled.
